@@ -4,6 +4,11 @@ const BodyParser = require("body-parser")
 
 const app = express()
 
+const http = require("http")
+const server = http.createServer(app)
+const {Server} = require("socket.io")
+const io = new Server(server)
+
 app.use(BodyParser.urlencoded({extended: true}))
 
 app.set("view engine", "ejs")
@@ -30,6 +35,10 @@ db.connect((err) => {
         
     })
 
+    app.get("/chat", (req, res) => {
+        res.render("chat", {title: "MASUK FORUM"})
+    })
+
     // post data
     app.post("/tambah", (req, res) => {
         const insertSql = `INSERT INTO school (name, kelas) VALUES('${req.body.name}', '${req.body.kelas}');`
@@ -41,8 +50,13 @@ db.connect((err) => {
     
 })
 
+io.on("connection", (socket) => {
+    socket.on("message", (data) => {
+        console.log("data =>", data)
+        socket.broadcast.emit("message", data)
+    })
+})
 
-
-app.listen(8000, () => {
+server.listen(8000, () => {
     console.log("server Ready")
 } )
